@@ -2,15 +2,27 @@ package msgtypes
 
 import (
 	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"io"
 	"sort"
 
 	"github.com/flywave/go-pbf"
+	"github.com/fxamacker/cbor"
 )
 
 const (
+	xmlns          = "urn:ietf:params:xml:ns:senml"
 	defaultVersion = 10
+)
+
+type Format int
+
+const (
+	JSON Format = 1 + iota
+	XML
+	CBOR
+	PROTO
 )
 
 var (
@@ -24,22 +36,23 @@ var (
 
 // https://datatracker.ietf.org/doc/html/rfc8428
 type Record struct {
-	Link        string   `json:"l,omitempty"`
-	BaseName    string   `json:"bn,omitempty"`
-	BaseTime    float64  `json:"bt,omitempty"`
-	BaseUnit    string   `json:"bu,omitempty"`
-	BaseVersion uint64   `json:"bver,omitempty"`
-	BaseValue   float64  `json:"bv,omitempty"`
-	BaseSum     float64  `json:"bs,omitempty"`
-	Name        string   `json:"n,omitempty"`
-	Unit        string   `json:"u,omitempty"`
-	Time        float64  `json:"t,omitempty"`
-	UpdateTime  float64  `json:"ut,omitempty"`
-	Value       *float64 `json:"v,omitempty"`
-	StringValue *string  `json:"vs,omitempty"`
-	DataValue   *string  `json:"vd,omitempty"`
-	BoolValue   *bool    `json:"vb,omitempty"`
-	Sum         *float64 `json:"s,omitempty"`
+	XMLName     *bool    `json:"-" xml:"senml" cbor:"-"`
+	Link        string   `json:"l,omitempty"  xml:"l,attr,omitempty" cbor:"-"`
+	BaseName    string   `json:"bn,omitempty" xml:"bn,attr,omitempty" cbor:"-2,keyasint,omitempty"`
+	BaseTime    float64  `json:"bt,omitempty" xml:"bt,attr,omitempty" cbor:"-3,keyasint,omitempty"`
+	BaseUnit    string   `json:"bu,omitempty" xml:"bu,attr,omitempty" cbor:"-4,keyasint,omitempty"`
+	BaseVersion uint     `json:"bver,omitempty" xml:"bver,attr,omitempty" cbor:"-1,keyasint,omitempty"`
+	BaseValue   float64  `json:"bv,omitempty" xml:"bv,attr,omitempty" cbor:"-5,keyasint,omitempty"`
+	BaseSum     float64  `json:"bs,omitempty" xml:"bs,attr,omitempty" cbor:"-6,keyasint,omitempty"`
+	Name        string   `json:"n,omitempty" xml:"n,attr,omitempty" cbor:"0,keyasint,omitempty"`
+	Unit        string   `json:"u,omitempty" xml:"u,attr,omitempty" cbor:"1,keyasint,omitempty"`
+	Time        float64  `json:"t,omitempty" xml:"t,attr,omitempty" cbor:"6,keyasint,omitempty"`
+	UpdateTime  float64  `json:"ut,omitempty" xml:"ut,attr,omitempty" cbor:"7,keyasint,omitempty"`
+	Value       *float64 `json:"v,omitempty" xml:"v,attr,omitempty" cbor:"2,keyasint,omitempty"`
+	StringValue *string  `json:"vs,omitempty" xml:"vs,attr,omitempty" cbor:"3,keyasint,omitempty"`
+	DataValue   *string  `json:"vd,omitempty" xml:"vd,attr,omitempty" cbor:"8,keyasint,omitempty"`
+	BoolValue   *bool    `json:"vb,omitempty" xml:"vb,attr,omitempty" cbor:"4,keyasint,omitempty"`
+	Sum         *float64 `json:"s,omitempty" xml:"s,attr,omitempty" cbor:"5,keyasint,omitempty"`
 }
 
 func (r *Record) ToJson() string {
@@ -67,17 +80,17 @@ func (p Records) Swap(i, j int) {
 	p[i], p[j] = p[j], p[i]
 }
 
-func Normalize(p Records) (Records, error) {
+func Normalize(p Pack) (Pack, error) {
 	if err := Validate(p); err != nil {
-		return Records{}, err
+		return Pack{}, err
 	}
-	records := make([]Record, len(p))
+	records := make([]Record, len(p.Records))
 	var bname string
 	var btime float64
 	var bsum float64
 	var bunit string
 
-	for i, r := range p {
+	for i, r := range p.Records {
 		if r.BaseTime != 0 {
 			btime = r.BaseTime
 		}
@@ -112,16 +125,16 @@ func Normalize(p Records) (Records, error) {
 		r.BaseSum = 0
 		records[i] = r
 	}
-	p = records
+	p.Records = records
 	sort.Sort(&p)
 	return p, nil
 }
 
-func Validate(p Records) error {
-	var bver uint64
+func Validate(p Pack) error {
+	var bver uint
 	var bname string
 	var bsum float64
-	for _, r := range p {
+	for _, r := range p.Records {
 		if bver == 0 && r.BaseVersion != 0 {
 			bver = r.BaseVersion
 		}
@@ -219,7 +232,7 @@ func decodeRecordfunc(key pbf.TagType, val pbf.WireType, result interface{}, rea
 		record.BaseUnit = reader.ReadString()
 	}
 	if key == BaseVersionTag && val == pbf.Varint {
-		record.BaseVersion = reader.ReadUInt64()
+		record.BaseVersion = uint(reader.ReadUInt64())
 	}
 	if key == BaseValueTag && val == pbf.Fixed64 {
 		record.BaseValue = reader.ReadDouble()
@@ -261,7 +274,7 @@ func decodeRecordfunc(key pbf.TagType, val pbf.WireType, result interface{}, rea
 	}
 }
 
-func Decode(bytevals []byte) (records Records, err error) {
+func decodeProto(bytevals []byte) (records Records, err error) {
 	r := &pbf.Reader{Pbf: bytevals, Length: len(bytevals)}
 
 	records = Records{}
@@ -288,7 +301,7 @@ func encodeRecord(writer *pbf.Writer, record *Record) error {
 	if record.BaseUnit != "" {
 		writer.WriteString(BaseUnitTag, record.BaseUnit)
 	}
-	writer.WriteUInt64(BaseVersionTag, record.BaseVersion)
+	writer.WriteUInt64(BaseVersionTag, uint64(record.BaseVersion))
 	writer.WriteDouble(BaseValueTag, record.BaseValue)
 	writer.WriteDouble(BaseSumTag, record.BaseSum)
 	if record.Name != "" {
@@ -318,7 +331,7 @@ func encodeRecord(writer *pbf.Writer, record *Record) error {
 	return nil
 }
 
-func Encode(records Records) ([]byte, error) {
+func encodeProto(records Records) ([]byte, error) {
 	w := pbf.NewWriter()
 
 	for _, record := range records {
@@ -328,4 +341,66 @@ func Encode(records Records) ([]byte, error) {
 	}
 
 	return w.Finish(), nil
+}
+
+type Pack struct {
+	XMLName *bool    `json:"_,omitempty" xml:"sensml"`
+	Xmlns   string   `json:"_,omitempty" xml:"xmlns,attr"`
+	Records []Record `xml:"senml"`
+}
+
+func (p *Pack) Len() int {
+	return len(p.Records)
+}
+
+func (p *Pack) Less(i, j int) bool {
+	return p.Records[i].Time < p.Records[j].Time
+}
+
+func (p *Pack) Swap(i, j int) {
+	p.Records[i], p.Records[j] = p.Records[j], p.Records[i]
+}
+
+func Decode(msg []byte, format Format) (Pack, error) {
+	var p Pack
+	switch format {
+	case JSON:
+		if err := json.Unmarshal(msg, &p.Records); err != nil {
+			return Pack{}, err
+		}
+	case XML:
+		if err := xml.Unmarshal(msg, &p); err != nil {
+			return Pack{}, err
+		}
+		p.Xmlns = xmlns
+	case CBOR:
+		if err := cbor.Unmarshal(msg, &p.Records); err != nil {
+			return Pack{}, err
+		}
+	case PROTO:
+		var err error
+		if p.Records, err = decodeProto(msg); err != nil {
+			return Pack{}, err
+		}
+	default:
+		return Pack{}, ErrUnsupportedFormat
+	}
+
+	return p, Validate(p)
+}
+
+func Encode(p Pack, format Format) ([]byte, error) {
+	switch format {
+	case JSON:
+		return json.Marshal(p.Records)
+	case XML:
+		p.Xmlns = xmlns
+		return xml.Marshal(p)
+	case CBOR:
+		return cbor.Marshal(p.Records, cbor.CanonicalEncOptions())
+	case PROTO:
+		return encodeProto(p.Records)
+	default:
+		return nil, ErrUnsupportedFormat
+	}
 }
