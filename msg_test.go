@@ -3,9 +3,11 @@ package msgtypes
 import "testing"
 
 func TestEncodeDecode(t *testing.T) {
+	v := 20.6
+	cv := []float64{36.5, 118.4}
 	recs := Pack{Records: []Record{
-		{Name: "test1"},
-		{Name: "test2"},
+		{Name: "test1", Value: &v},
+		{Name: "test2", CoordValue: &cv},
 	},
 	}
 
