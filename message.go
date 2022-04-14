@@ -52,6 +52,7 @@ type Record struct {
 	DataValue   *string    `json:"vd,omitempty" xml:"vd,attr,omitempty" cbor:"8,keyasint,omitempty"`
 	BoolValue   *bool      `json:"vb,omitempty" xml:"vb,attr,omitempty" cbor:"4,keyasint,omitempty"`
 	CoordValue  *[]float64 `json:"vc,omitempty" xml:"vc,attr,omitempty" cbor:"9,keyasint,omitempty"`
+	LongValue   *int64     `json:"vl,omitempty" xml:"vl,attr,omitempty" cbor:"10,keyasint,omitempty"`
 	Sum         *float64   `json:"s,omitempty" xml:"s,attr,omitempty" cbor:"5,keyasint,omitempty"`
 }
 
@@ -170,6 +171,9 @@ func Validate(p Pack) error {
 		if r.CoordValue != nil {
 			valCnt++
 		}
+		if r.LongValue != nil {
+			valCnt++
+		}
 		if valCnt > 1 {
 			return ErrTooManyValues
 		}
@@ -217,6 +221,7 @@ const (
 	BoolValueTag   pbf.TagType = 15
 	SumTag         pbf.TagType = 16
 	CoordValueTag  pbf.TagType = 17
+	LongValueTag   pbf.TagType = 18
 
 	RecordsTag pbf.TagType = 1
 )
@@ -280,6 +285,10 @@ func decodeRecordfunc(key pbf.TagType, val pbf.WireType, result interface{}, rea
 		v := reader.ReadPackedDouble()
 		record.CoordValue = &v
 	}
+	if key == LongValueTag && val == pbf.Varint {
+		v := reader.ReadInt64()
+		record.LongValue = &v
+	}
 }
 
 func decodeProto(bytevals []byte) (records Records, err error) {
@@ -338,6 +347,9 @@ func encodeRecord(writer *pbf.Writer, record *Record) error {
 	}
 	if record.CoordValue != nil {
 		writer.WritePackedDouble(CoordValueTag, *record.CoordValue)
+	}
+	if record.LongValue != nil {
+		writer.WriteInt64(LongValueTag, *record.LongValue)
 	}
 	return nil
 }
