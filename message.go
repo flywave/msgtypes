@@ -34,25 +34,25 @@ var (
 	ErrNoValues          = errors.New("no value or sum field found")
 )
 
-// https://datatracker.ietf.org/doc/html/rfc8428
 type Record struct {
-	XMLName     *bool    `json:"-" xml:"senml" cbor:"-"`
-	Link        string   `json:"l,omitempty"  xml:"l,attr,omitempty" cbor:"-"`
-	BaseName    string   `json:"bn,omitempty" xml:"bn,attr,omitempty" cbor:"-2,keyasint,omitempty"`
-	BaseTime    float64  `json:"bt,omitempty" xml:"bt,attr,omitempty" cbor:"-3,keyasint,omitempty"`
-	BaseUnit    string   `json:"bu,omitempty" xml:"bu,attr,omitempty" cbor:"-4,keyasint,omitempty"`
-	BaseVersion uint     `json:"bver,omitempty" xml:"bver,attr,omitempty" cbor:"-1,keyasint,omitempty"`
-	BaseValue   float64  `json:"bv,omitempty" xml:"bv,attr,omitempty" cbor:"-5,keyasint,omitempty"`
-	BaseSum     float64  `json:"bs,omitempty" xml:"bs,attr,omitempty" cbor:"-6,keyasint,omitempty"`
-	Name        string   `json:"n,omitempty" xml:"n,attr,omitempty" cbor:"0,keyasint,omitempty"`
-	Unit        string   `json:"u,omitempty" xml:"u,attr,omitempty" cbor:"1,keyasint,omitempty"`
-	Time        float64  `json:"t,omitempty" xml:"t,attr,omitempty" cbor:"6,keyasint,omitempty"`
-	UpdateTime  float64  `json:"ut,omitempty" xml:"ut,attr,omitempty" cbor:"7,keyasint,omitempty"`
-	Value       *float64 `json:"v,omitempty" xml:"v,attr,omitempty" cbor:"2,keyasint,omitempty"`
-	StringValue *string  `json:"vs,omitempty" xml:"vs,attr,omitempty" cbor:"3,keyasint,omitempty"`
-	DataValue   *string  `json:"vd,omitempty" xml:"vd,attr,omitempty" cbor:"8,keyasint,omitempty"`
-	BoolValue   *bool    `json:"vb,omitempty" xml:"vb,attr,omitempty" cbor:"4,keyasint,omitempty"`
-	Sum         *float64 `json:"s,omitempty" xml:"s,attr,omitempty" cbor:"5,keyasint,omitempty"`
+	XMLName     *bool      `json:"-" xml:"senml" cbor:"-"`
+	Link        string     `json:"l,omitempty"  xml:"l,attr,omitempty" cbor:"-"`
+	BaseName    string     `json:"bn,omitempty" xml:"bn,attr,omitempty" cbor:"-2,keyasint,omitempty"`
+	BaseTime    float64    `json:"bt,omitempty" xml:"bt,attr,omitempty" cbor:"-3,keyasint,omitempty"`
+	BaseUnit    string     `json:"bu,omitempty" xml:"bu,attr,omitempty" cbor:"-4,keyasint,omitempty"`
+	BaseVersion uint       `json:"bver,omitempty" xml:"bver,attr,omitempty" cbor:"-1,keyasint,omitempty"`
+	BaseValue   float64    `json:"bv,omitempty" xml:"bv,attr,omitempty" cbor:"-5,keyasint,omitempty"`
+	BaseSum     float64    `json:"bs,omitempty" xml:"bs,attr,omitempty" cbor:"-6,keyasint,omitempty"`
+	Name        string     `json:"n,omitempty" xml:"n,attr,omitempty" cbor:"0,keyasint,omitempty"`
+	Unit        string     `json:"u,omitempty" xml:"u,attr,omitempty" cbor:"1,keyasint,omitempty"`
+	Time        float64    `json:"t,omitempty" xml:"t,attr,omitempty" cbor:"6,keyasint,omitempty"`
+	UpdateTime  float64    `json:"ut,omitempty" xml:"ut,attr,omitempty" cbor:"7,keyasint,omitempty"`
+	Value       *float64   `json:"v,omitempty" xml:"v,attr,omitempty" cbor:"2,keyasint,omitempty"`
+	StringValue *string    `json:"vs,omitempty" xml:"vs,attr,omitempty" cbor:"3,keyasint,omitempty"`
+	DataValue   *string    `json:"vd,omitempty" xml:"vd,attr,omitempty" cbor:"8,keyasint,omitempty"`
+	BoolValue   *bool      `json:"vb,omitempty" xml:"vb,attr,omitempty" cbor:"4,keyasint,omitempty"`
+	CoordValue  *[]float64 `json:"vc,omitempty" xml:"vc,attr,omitempty" cbor:"9,keyasint,omitempty"`
+	Sum         *float64   `json:"s,omitempty" xml:"s,attr,omitempty" cbor:"5,keyasint,omitempty"`
 }
 
 func (r *Record) ToJson() string {
@@ -167,6 +167,9 @@ func Validate(p Pack) error {
 		if r.StringValue != nil {
 			valCnt++
 		}
+		if r.CoordValue != nil {
+			valCnt++
+		}
 		if valCnt > 1 {
 			return ErrTooManyValues
 		}
@@ -213,6 +216,7 @@ const (
 	DataValueTag   pbf.TagType = 14
 	BoolValueTag   pbf.TagType = 15
 	SumTag         pbf.TagType = 16
+	CoordValueTag  pbf.TagType = 17
 
 	RecordsTag pbf.TagType = 1
 )
@@ -272,6 +276,10 @@ func decodeRecordfunc(key pbf.TagType, val pbf.WireType, result interface{}, rea
 		v := reader.ReadDouble()
 		record.Sum = &v
 	}
+	if key == CoordValueTag && val == pbf.Bytes {
+		v := reader.ReadPackedDouble()
+		record.CoordValue = &v
+	}
 }
 
 func decodeProto(bytevals []byte) (records Records, err error) {
@@ -328,6 +336,9 @@ func encodeRecord(writer *pbf.Writer, record *Record) error {
 	if record.Sum != nil {
 		writer.WriteDouble(SumTag, *record.Sum)
 	}
+	if record.CoordValue != nil {
+		writer.WritePackedDouble(CoordValueTag, *record.CoordValue)
+	}
 	return nil
 }
 
@@ -344,8 +355,8 @@ func encodeProto(records Records) ([]byte, error) {
 }
 
 type Pack struct {
-	XMLName *bool    `json:"_,omitempty" xml:"sensml"`
-	Xmlns   string   `json:"_,omitempty" xml:"xmlns,attr"`
+	XMLName *bool    `json:"-" xml:"sensml"`
+	XMLNS   string   `json:"-" xml:"xmlns,attr"`
 	Records []Record `xml:"senml"`
 }
 
@@ -372,7 +383,7 @@ func Decode(msg []byte, format Format) (Pack, error) {
 		if err := xml.Unmarshal(msg, &p); err != nil {
 			return Pack{}, err
 		}
-		p.Xmlns = xmlns
+		p.XMLNS = xmlns
 	case CBOR:
 		if err := cbor.Unmarshal(msg, &p.Records); err != nil {
 			return Pack{}, err
@@ -394,7 +405,7 @@ func Encode(p Pack, format Format) ([]byte, error) {
 	case JSON:
 		return json.Marshal(p.Records)
 	case XML:
-		p.Xmlns = xmlns
+		p.XMLNS = xmlns
 		return xml.Marshal(p)
 	case CBOR:
 		return cbor.Marshal(p.Records, cbor.CanonicalEncOptions())
