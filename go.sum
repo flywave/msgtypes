@@ -1,5 +1,11 @@
 github.com/flywave/go-pbf v0.0.0-20210701015929-a3bdb1f6728e h1:BHGfBgDZ5CZlNtaMAgZjes6pP0ZpoDmPR1ePyUaI9Qk=
 github.com/flywave/go-pbf v0.0.0-20210701015929-a3bdb1f6728e/go.mod h1:cfHFEG24/0hT2xCSLJb8rT/2WE8ieeIrbOJq1sql/fg=
+github.com/flywave/go-pbf v0.0.0-20220414054754-035779ca6761 h1:4N0GSBZ7fcRq7AP0in1LVSvBy7GDnFd/e2OnSLSg8Is=
+github.com/flywave/go-pbf v0.0.0-20220414054754-035779ca6761/go.mod h1:cfHFEG24/0hT2xCSLJb8rT/2WE8ieeIrbOJq1sql/fg=
+github.com/flywave/go-pbf v0.0.0-20220414061801-34d14c53d5fd h1:qnsYr0v4tGCUMbfbZBJzaK4uI59zNinTn5BBaYraKQw=
+github.com/flywave/go-pbf v0.0.0-20220414061801-34d14c53d5fd/go.mod h1:cfHFEG24/0hT2xCSLJb8rT/2WE8ieeIrbOJq1sql/fg=
+github.com/flywave/go-pbf v0.0.0-20220414063137-a61fe15b9947 h1:oeMkxdaUlKzerEjZki08+PtwGEwXeMzDR6nEMFqb3j0=
+github.com/flywave/go-pbf v0.0.0-20220414063137-a61fe15b9947/go.mod h1:cfHFEG24/0hT2xCSLJb8rT/2WE8ieeIrbOJq1sql/fg=
 github.com/fxamacker/cbor v1.5.1 h1:XjQWBgdmQyqimslUh5r4tUGmoqzHmBFQOImkWGi2awg=
 github.com/fxamacker/cbor v1.5.1/go.mod h1:3aPGItF174ni7dDzd6JZ206H8cmr4GDNBGpPa971zsU=
 github.com/x448/float16 v0.8.4 h1:qLwI1I70+NjRFUR3zs1JPUCgaCXSh3SW62uAKT1mSBM=
