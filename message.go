@@ -51,7 +51,8 @@ type Record struct {
 	StringValue *string    `json:"vs,omitempty" xml:"vs,attr,omitempty" cbor:"3,keyasint,omitempty"`
 	DataValue   *string    `json:"vd,omitempty" xml:"vd,attr,omitempty" cbor:"8,keyasint,omitempty"`
 	BoolValue   *bool      `json:"vb,omitempty" xml:"vb,attr,omitempty" cbor:"4,keyasint,omitempty"`
-	CoordValue  *[]float64 `json:"vc,omitempty" xml:"vc,attr,omitempty" cbor:"9,keyasint,omitempty"`
+	VectorValue *[]float64 `json:"vv,omitempty" xml:"vv,attr,omitempty" cbor:"9,keyasint,omitempty"`
+	EnumValue   *[]string  `json:"ve,omitempty" xml:"ve,attr,omitempty" cbor:"10,keyasint,omitempty"`
 	Sum         *float64   `json:"s,omitempty" xml:"s,attr,omitempty" cbor:"5,keyasint,omitempty"`
 }
 
@@ -167,7 +168,10 @@ func Validate(p Pack) error {
 		if r.StringValue != nil {
 			valCnt++
 		}
-		if r.CoordValue != nil {
+		if r.VectorValue != nil {
+			valCnt++
+		}
+		if r.EnumValue != nil {
 			valCnt++
 		}
 		if valCnt > 1 {
@@ -216,7 +220,8 @@ const (
 	DataValueTag   pbf.TagType = 14
 	BoolValueTag   pbf.TagType = 15
 	SumTag         pbf.TagType = 16
-	CoordValueTag  pbf.TagType = 17
+	VectorValueTag pbf.TagType = 17
+	EnumValueTag   pbf.TagType = 18
 
 	RecordsTag pbf.TagType = 1
 )
@@ -276,9 +281,13 @@ func decodeRecordfunc(key pbf.TagType, val pbf.WireType, result interface{}, rea
 		v := reader.ReadDouble()
 		record.Sum = &v
 	}
-	if key == CoordValueTag && val == pbf.Bytes {
+	if key == VectorValueTag && val == pbf.Bytes {
 		v := reader.ReadPackedDouble()
-		record.CoordValue = &v
+		record.VectorValue = &v
+	}
+	if key == EnumValueTag && val == pbf.Bytes {
+		v := reader.ReadPackedString()
+		record.EnumValue = &v
 	}
 }
 
@@ -336,8 +345,11 @@ func encodeRecord(writer *pbf.Writer, record *Record) error {
 	if record.Sum != nil {
 		writer.WriteDouble(SumTag, *record.Sum)
 	}
-	if record.CoordValue != nil {
-		writer.WritePackedDouble(CoordValueTag, *record.CoordValue)
+	if record.VectorValue != nil {
+		writer.WritePackedDouble(VectorValueTag, *record.VectorValue)
+	}
+	if record.EnumValue != nil {
+		writer.WritePackedString(EnumValueTag, *record.EnumValue)
 	}
 	return nil
 }

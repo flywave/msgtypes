@@ -1,5 +1,7 @@
 github.com/flywave/go-pbf v0.0.0-20220414063137-a61fe15b9947 h1:oeMkxdaUlKzerEjZki08+PtwGEwXeMzDR6nEMFqb3j0=
 github.com/flywave/go-pbf v0.0.0-20220414063137-a61fe15b9947/go.mod h1:cfHFEG24/0hT2xCSLJb8rT/2WE8ieeIrbOJq1sql/fg=
+github.com/flywave/go-pbf v0.0.0-20230306063816-5e5b0da27bbd h1:WbnDF3Mw2TrEkds/iMlBh4nayiFLKWyryo84NvWWI/U=
+github.com/flywave/go-pbf v0.0.0-20230306063816-5e5b0da27bbd/go.mod h1:cfHFEG24/0hT2xCSLJb8rT/2WE8ieeIrbOJq1sql/fg=
 github.com/fxamacker/cbor v1.5.1 h1:XjQWBgdmQyqimslUh5r4tUGmoqzHmBFQOImkWGi2awg=
 github.com/fxamacker/cbor v1.5.1/go.mod h1:3aPGItF174ni7dDzd6JZ206H8cmr4GDNBGpPa971zsU=
 github.com/x448/float16 v0.8.4 h1:qLwI1I70+NjRFUR3zs1JPUCgaCXSh3SW62uAKT1mSBM=
