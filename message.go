@@ -204,33 +204,29 @@ func validateName(name string) error {
 }
 
 const (
-	LinkTag        pbf.TagType = 1
-	BaseNameTag    pbf.TagType = 2
-	BaseTimeTag    pbf.TagType = 3
-	BaseUnitTag    pbf.TagType = 4
-	BaseVersionTag pbf.TagType = 5
-	BaseValueTag   pbf.TagType = 6
-	BaseSumTag     pbf.TagType = 7
-	NameTag        pbf.TagType = 8
-	UnitTag        pbf.TagType = 9
-	TimeTag        pbf.TagType = 10
-	UpdateTimeTag  pbf.TagType = 11
-	ValueTag       pbf.TagType = 12
-	StringValueTag pbf.TagType = 13
-	DataValueTag   pbf.TagType = 14
-	BoolValueTag   pbf.TagType = 15
-	SumTag         pbf.TagType = 16
-	VectorValueTag pbf.TagType = 17
-	EnumValueTag   pbf.TagType = 18
+	BaseNameTag    pbf.TagType = 1
+	BaseTimeTag    pbf.TagType = 2
+	BaseUnitTag    pbf.TagType = 3
+	BaseVersionTag pbf.TagType = 4
+	BaseValueTag   pbf.TagType = 5
+	BaseSumTag     pbf.TagType = 6
+	NameTag        pbf.TagType = 7
+	UnitTag        pbf.TagType = 8
+	TimeTag        pbf.TagType = 9
+	UpdateTimeTag  pbf.TagType = 10
+	ValueTag       pbf.TagType = 11
+	StringValueTag pbf.TagType = 12
+	DataValueTag   pbf.TagType = 13
+	BoolValueTag   pbf.TagType = 14
+	SumTag         pbf.TagType = 15
+	VectorValueTag pbf.TagType = 16
+	EnumValueTag   pbf.TagType = 17
 
 	RecordsTag pbf.TagType = 1
 )
 
 func decodeRecordfunc(key pbf.TagType, val pbf.WireType, result interface{}, reader *pbf.Reader) {
 	record := result.(*Record)
-	if key == LinkTag && val == pbf.Bytes {
-		record.Link = reader.ReadString()
-	}
 	if key == BaseNameTag && val == pbf.Bytes {
 		record.BaseName = reader.ReadString()
 	}
@@ -308,9 +304,6 @@ func decodeProto(bytevals []byte) (records Records, err error) {
 }
 
 func encodeRecord(writer *pbf.Writer, record *Record) error {
-	if record.Link != "" {
-		writer.WriteString(LinkTag, record.Link)
-	}
 	if record.BaseName != "" {
 		writer.WriteString(BaseNameTag, record.BaseName)
 	}
